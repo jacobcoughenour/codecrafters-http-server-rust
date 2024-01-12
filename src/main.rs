@@ -1,29 +1,37 @@
 use std::collections::HashMap;
-use std::io::Write;
-use std::io::Read;
-use std::net::TcpListener;
+use std::io;
+use tokio::io::AsyncReadExt;
+use tokio::io::AsyncWriteExt;
+use tokio::net::TcpStream;
+use tokio::net::TcpListener;
 
-fn main() {
+#[tokio::main]
+async fn main() -> io::Result<()> {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     println!("Logs from your program will appear here!");
 
-    let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:4221").await.unwrap();
     
-    for stream in listener.incoming() {
-        match stream {
-            Ok(mut stream) => {
-                println!("accepted new connection");
-
-                let mut buffer = [0u8; 4096];
-                stream.read(&mut buffer).unwrap();
-                let response = handle_request(buffer);
-                stream.write_all(response.as_bytes()).unwrap();
+    loop {
+        match listener.accept().await {
+            Ok((socket, _)) => {
+                tokio::spawn(async move {
+                    handle_socket(socket).await;
+                });
             }
             Err(e) => {
-                println!("error: {}", e);
+                println!("failed to accept socket; error = {:?}", e);
             }
         }
     }
+}
+
+async fn handle_socket(mut stream: TcpStream) {
+    let mut buffer = [0u8; 4096];
+    stream.read(&mut buffer).await.unwrap();
+    let response = handle_request(buffer);
+    stream.write(response.as_bytes()).await.unwrap();
+    stream.flush().await.unwrap();
 }
 
 fn respond(status: Option<u16>, body: Option<String>, headers: Option<HashMap<String, String>>) -> String {
