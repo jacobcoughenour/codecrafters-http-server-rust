@@ -74,7 +74,10 @@ fn handle_request(stream: [u8; 4096]) -> String {
         return respond(Some(200), None, None);
     }
 
-    let requested_path_split: Vec<&str> = requested_path.split("/").collect();
+    let requested_path_split: Vec<&str> = requested_path
+        .split("/")
+        .filter(|s| s.len() > 0)
+        .collect();
     
     if requested_path_split.len() == 0 {
         return respond(Some(200), None, None);
