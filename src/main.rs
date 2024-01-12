@@ -76,16 +76,38 @@ fn handle_request(stream: [u8; 4096]) -> String {
 
     let requested_path_split: Vec<&str> = requested_path
         .split("/")
+        // filter out the empty strings
+        // this means // will be treated as /
         .filter(|s| s.len() > 0)
         .collect();
     
+    // respond with 200 when the path is empty
     if requested_path_split.len() == 0 {
         return respond(Some(200), None, None);
     }
 
+    // parse headers
+    let mut headers: HashMap<String, String> = HashMap::new();
+    // for each line after the first
+    for line in &request_lines[1..] {
+        let line_split: Vec<&str> = line.split(":").collect();
+        if line_split.len() == 2 {
+            headers.insert(String::from(line_split[0].trim().to_lowercase()), String::from(line_split[1].trim()));
+        }
+    }
+
+    // echo endpoint
     if requested_path.starts_with("/echo/") {
         let echo_param = requested_path[6..].to_string();
         return respond(Some(200), Some(String::from(echo_param)), None);
+    }
+
+    // user agent endpoint
+    if requested_path == "/user-agent" {
+        let unknown_agent = String::from("unknown");
+        let user_agent = headers.get("user-agent")
+            .unwrap_or(&unknown_agent);
+        return respond(Some(200), Some(user_agent.to_string()), None);
     }
 
     return respond(Some(404), None, None);
