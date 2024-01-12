@@ -72,7 +72,7 @@ fn handle_request(stream: [u8; 4096]) -> String {
 
     if !requested_path.starts_with("/") {
         return respond(Some(200), None, None);
-    } 
+    }
 
     let requested_path_split: Vec<&str> = requested_path.split("/").collect();
     
