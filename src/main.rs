@@ -1,5 +1,5 @@
 use std::env;
-use std::io;
+use std::io::{self};
 
 use http_server_starter_rust::*;
 
@@ -29,7 +29,7 @@ async fn main() -> io::Result<()> {
     });
 
     if !directory.is_empty() {
-        server.serve(String::from("files"), directory);
+        server.serve(String::from("files"), directory, true);
     }
 
     // start server
